@@ -63,7 +63,7 @@ app.get('/api/notes/:id', (req, res) => {
 })
 
 // Doen
-app.delete('/api/notes/:id', (req, res) => {
+app.delete('/api/notes/:id', (req, res, next) => {
   Note.findByIdAndRemove(req.params.id)
     .then(result => {
       // 不管删除资源请求成功与否，都向响应返回204状态码
@@ -85,12 +85,11 @@ app.post('/api/notes', (req, res) => {
   const note = new Note({
     content: body.content,
     important: body.important || false,
-    date: new Date(),
-    id: generateId(),
+    date: new Date()
   })
 
   note.save().then(savedNote => {
-    response.json(savedNote)
+    res.json(savedNote)
   })
 })
 

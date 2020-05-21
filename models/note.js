@@ -7,7 +7,7 @@ console.log('connecting to', url)
 
 mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(res => {
-    console.log('connected to MongoDB Atlas')
+    console.log('connected to MongoDB at ' + res.connections[0].host + ":" + res.connections[0].port)
   })
   .catch(err => {
     console.log('error connecting to MongoDB Atlas', err.message)

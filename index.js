@@ -2,19 +2,25 @@ require('dotenv').config()
 
 const express = require('express')
 const app = express()
-const Note = require('./models/note')
+const usersRouter = require('./controllers/users')
+const notesRouter = require('./controllers/notes')
 
+// middleware
+
+// bodyParser
 app.use(express.json())
+// serve static files
 app.use(express.static('build'))
-const requestLogger = (request, response, next) => {
+// requestLogger
+app.use((request, response, next) => {
   console.log('Method:', request.method)
   console.log('Path:  ', request.path)
   console.log('Body:  ', request.body)
   console.log('---')
   next()
-}
-app.use(requestLogger)
-app.use('*', (req, res, next) => {
+})
+// CROS middleware
+const CROS = (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*'); //这个表示任意域名都可以访问，这样写不能携带cookie了。
   //res.header('Access-Control-Allow-Origin', 'http://www.baidu.com'); //这样写，只有www.baidu.com 可以访问。
   res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
@@ -25,94 +31,18 @@ app.use('*', (req, res, next) => {
   else {
     next();
   }
-})
-
-
-const generateId = () => {
-  const maxId = notes.length > 0
-    ? Math.max(...notes.map(n => n.id))
-    : 0
-  return maxId + 1
 }
-
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World!</h1>')
-})
-
-// done adding mongo data
-app.get('/api/notes', (req, res) => {
-  Note.find({}).then(notes => {
-    res.json(notes)
-  })
-})
-
-// Done
-app.get('/api/notes/:id', (req, res) => {
-  Note.findById(req.params.id)
-    .then(foundNote => {
-      if (foundNote) {
-        res.json(foundNote)
-      } else {
-        res.status(404).end()
-      }
-    })
-    .catch(err => {
-      console.log(err)
-      res.status(400).send({ error: 'malformed syntax' })
-    })
-})
-
-// Doen
-app.delete('/api/notes/:id', (req, res, next) => {
-  Note.findByIdAndRemove(req.params.id)
-    .then(result => {
-      // 不管删除资源请求成功与否，都向响应返回204状态码
-      res.status(204).end()
-    })
-    .catch(error => next(error))
-})
-
-// Done
-app.post('/api/notes', (req, res) => {
-  const body = req.body
-  
-  if (!body.content) {
-    return res.status(400).json({
-      error: 'content missing'
-    })
-  }
-
-  const note = new Note({
-    content: body.content,
-    important: body.important || false,
-    date: new Date()
-  })
-
-  note.save().then(savedNote => {
-    res.json(savedNote)
-  })
-})
-
-app.put('/api/notes/:id', (req, res, next) => {
-  const body = req.body
-  
-  const note = {
-    content: body.content,
-    important: body.important
-  }
-
-  Note.findByIdAndUpdate(req.params.id, note, { new: true })
-    .then(updatedNote => {
-      res.json(updatedNote)
-    })
-    .catch(error => next(error))
-})
-
+app.use('*', CROS)
+// users router
+app.use('/api/users', usersRouter)
+// notes router
+app.use('/api/notes', notesRouter)
+// 
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })
 }
 app.use(unknownEndpoint)
-
+// 
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
   if (error.name === 'CastError' && error.kind === 'ObjectId') {
@@ -120,7 +50,6 @@ const errorHandler = (error, request, response, next) => {
   }
   next(error)
 }
-
 app.use(errorHandler)
 
 const port = process.env.PORT

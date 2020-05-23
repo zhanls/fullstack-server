@@ -4,6 +4,7 @@ const express = require('express')
 const app = express()
 const usersRouter = require('./controllers/users')
 const notesRouter = require('./controllers/notes')
+const loginRouter = require('./controllers/login')
 
 // middleware
 
@@ -37,6 +38,8 @@ app.use('*', CROS)
 app.use('/api/users', usersRouter)
 // notes router
 app.use('/api/notes', notesRouter)
+// login router
+app.use('/api/login', loginRouter)
 // 
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })

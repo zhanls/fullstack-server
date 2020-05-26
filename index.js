@@ -27,9 +27,8 @@ const CROS = (req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
   res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');//设置方法
   if (req.method == 'OPTIONS') {
-    res.send(200); // 意思是，在正常的请求之前，会发送一个验证，是否可以请求。
-  }
-  else {
+    res.sendStatus(200); // 意思是，在正常的请求之前，会发送一个验证，是否可以请求。
+  } else {
     next();
   }
 }
@@ -47,10 +46,14 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 // 
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
-  if (error.name === 'CastError' && error.kind === 'ObjectId') {
+  if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  } else if (error.name === 'JsonWebTokenError') {
+    return response.status(401).json({ error: 'invalid token' })
   }
+  
   next(error)
 }
 app.use(errorHandler)

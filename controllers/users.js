@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt')
 const usersRouter = require('express').Router()
 const User = require('../models/user')
 
-usersRouter.post('/', async (req, res) => {
+usersRouter.post('/', async (req, res, next) => {
   const body = req.body
   
   const saltRounds = 10
@@ -14,10 +14,20 @@ usersRouter.post('/', async (req, res) => {
     passwordHash
   })
 
-  const savedUser = await user.save()
-
-  res.json(savedUser)
+  user.save()
+    .then(savedUser => {
+      res.json(savedUser)
+    })
+    .catch(error => next(error))
 })
+
+// usersRouter.delete('/:id', async (req, res, next) => {
+//   User.findByIdAndRemove(req.params.id)
+//     .then(result => {
+//       res.status(204).end()
+//     })
+//     .catch(error => next(error))
+// })
 
 usersRouter.get('/', async (req, res) => {
   const users = await User.find({}).populate('notes')

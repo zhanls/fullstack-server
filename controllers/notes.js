@@ -1,10 +1,23 @@
 const notesRouter = require('express').Router()
 const Note = require('../models/note')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
+const getTokenFrom = req => {
+  const authorization = req.get('authorization')
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    return authorization.substring(7)
+  }
+  return null
+}
 
 notesRouter.post('/', async (req, res) => {
   const body = req.body
-
+  const token = getTokenFrom(req)
+  const decodedToken = jwt.verify(token, process.env.SECRET)
+  if (!token || !decodedToken.id) {
+    return res.status(401).json({ error: 'token missing or invalid' })
+  }
   const user = await User.findById(body.userId)
   
   if (!body.content) {
@@ -17,16 +30,17 @@ notesRouter.post('/', async (req, res) => {
     content: body.content,
     important: body.important || false,
     date: new Date(),
-    user: user._id
+    user: user.id
   })
 
   const savedNote = await note.save()
-  user.notes = user.notes.concat(savedNote._id)
+  user.notes = user.notes.concat(savedNote.id)
+  await user.save()
 
   res.json(savedNote.toJSON())
 })
 
-notesRouter.delete('/:id', (req, res, next) => {
+notesRouter.delete('/:id', async (req, res, next) => {
   Note.findByIdAndRemove(req.params.id)
     .then(result => {
       // 不管删除资源请求成功与否，都向响应返回204状态码

@@ -1,0 +1,1 @@
+GET https://www.xiaohulu.com/apis/bd/anchor/anchor/get_hot_word?plat_id=9&room_id=497383565&date=2020-5-24

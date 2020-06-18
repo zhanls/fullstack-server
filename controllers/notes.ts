@@ -1,23 +1,27 @@
-const notesRouter = require('express').Router()
+import express from 'express'
+const notesRouter: express.Router = express.Router()
 const Note = require('../models/note')
 const User = require('../models/user')
 const jwt = require('jsonwebtoken')
 
-const getTokenFrom = req => {
+const getTokenFrom = (req: express.Request): string => {
   const authorization = req.get('authorization')
   if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
     return authorization.substring(7)
+  } else {
+    return ''
   }
-  return null
 }
 
 notesRouter.post('/', async (req, res) => {
   const body = req.body
   const token = getTokenFrom(req)
+  
   const decodedToken = jwt.verify(token, process.env.SECRET)
   if (!token || !decodedToken.id) {
-    return res.status(401).json({ error: 'token missing or invalid' })
+    res.status(401).json({ error: 'token missing or invalid' })
   }
+
   const user = await User.findById(body.userId)
   
   if (!body.content) {
